@@ -1,0 +1,28 @@
+ARG PROXY=<PROXY:SITE>:<PORT>
+
+FROM gradle:5.6.3-jdk8 AS BUILDER
+
+ARG PROXY
+ENV http_proxy=$PROXY
+ENV https_proxy=$PROXY
+
+COPY src /usr/src/app/src
+COPY build.gradle /usr/src/app
+COPY gradle.properties /usr/src/app
+
+WORKDIR /usr/src/app
+
+RUN gradle build
+
+COPY small-log.txt /
+RUN cp build/libs/Simscale_v1.jar /
+
+FROM openjdk:8-jdk-alpine
+
+ARG PROXY
+ENV http_proxy=$PROXY
+ENV https_proxy=$PROXY
+
+RUN apk add --no-cache bash
+COPY --from=BUILDER /Simscale_v1.jar /Simscale_v1.jar
+COPY --from=BUILDER /small-log.txt /small-log.txt
