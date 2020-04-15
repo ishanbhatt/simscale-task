@@ -1,0 +1,55 @@
+apply plugin: 'java'
+
+group 'SIMSCALE'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+// Specifying dependencies , Junit specific dependencies needed for testing only
+// jackson is needed at compile-time
+dependencies {
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5.4.2')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
+}
+
+// The test task, it uses other stuff by default and we are overriding some stuff
+test {
+    dependsOn cleanTest
+    testLogging {
+//        showStandardStreams true
+//        events = ["passed", "skipped", "failed", "standardOut", "standardError"]
+//        Uncomment the line above if you want everything on console
+        events = ["passed", "skipped", "failed"]  // To see which tests are there
+    }
+    useJUnitPlatform()  // Specifies that JUnit Platform (a.k.a. JUnit 5) should be used to execute the tests
+}
+
+// Create a JavaExec class and specify the main location, so that you can execute the code,
+// without building the jar
+task runWithJavaExec(type: JavaExec) {
+    group = "Execution"
+    description = "Run the main class with JavaExecTask"
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'app.Starter'
+}
+
+// jar task, It gets executed in gradle build
+jar {
+    archiveName("Simscale_v1.jar")
+    // Needed because to run jar file as java -jar, manifest is needed and that's how we build it
+    manifest {
+        attributes(
+                'Main-Class': 'app.Starter'
+        )
+    }
+    // To make a fat-jar i.e include all dependencies in the jar file, so that it can run independently
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
